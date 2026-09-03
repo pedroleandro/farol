@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?? "Dashboard | Admin - " . APP_NAME ?></title>
+    <title><?= $title ?? "Dashboard | " . APP_NAME ?></title>
     <link rel="shortcut icon" href="<?= assets_mazer('/assets/compiled/svg/favicon.svg') ?>" type="image/x-icon">
     <link rel="stylesheet" href="<?= assets_mazer('/assets/compiled/css/app.css') ?>">
     <link rel="stylesheet" href="<?= assets_mazer('/assets/compiled/css/app-dark.css') ?>">
@@ -20,7 +20,7 @@
             <div class="sidebar-header position-relative">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="logo">
-                        <a href="<?= url('/admin/dashboard') ?>">
+                        <a href="<?= url('/dashboard') ?>">
                             <img src="<?= assets_mazer('/assets/compiled/svg/logo.svg') ?>" alt="Logo">
                         </a>
                     </div>
@@ -59,20 +59,17 @@
                     </div>
                 </div>
             </div>
-
             <div class="sidebar-menu">
                 <ul class="menu">
                     <li class="sidebar-title">Menu</li>
-
                     <li class="sidebar-item <?= ($menuActive ?? '') === 'dashboard' ? 'active' : '' ?>">
                         <a href="<?= url('/dashboard') ?>" class="sidebar-link">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
-
+                    <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
                     <li class="sidebar-title">Gerenciamento</li>
-
                     <li class="sidebar-item has-sub <?= ($menuActive ?? '') === 'pedidos' ? 'active' : '' ?>">
                         <a href="" class="sidebar-link">
                             <i class="bi bi-truck"></i>
@@ -87,7 +84,6 @@
                             </li>
                         </ul>
                     </li>
-
                     <li class="sidebar-item has-sub <?= ($menuActive ?? '') === 'clientes' ? 'active' : '' ?>">
                         <a href="" class="sidebar-link">
                             <i class="bi bi-people-fill"></i>
@@ -102,33 +98,36 @@
                             </li>
                         </ul>
                     </li>
+                    <?php endif; ?>
 
-                    <li class="sidebar-item <?= ($menuActive ?? '') === 'importar' ? 'active' : '' ?>">
-                        <a href="<?= url('/importar') ?>" class="sidebar-link">
-                            <i class="bi bi-file-earmark-arrow-up-fill"></i>
-                            <span>Importar Planilha</span>
-                        </a>
-                    </li>
+                    <?php if (in_array($userRole ?? '', \App\Models\User::ROLES_CAN_IMPORT)): ?>
+                        <li class="sidebar-item <?= ($menuActive ?? '') === 'importar' ? 'active' : '' ?>">
+                            <a href="<?= url('/importar') ?>" class="sidebar-link">
+                                <i class="bi bi-file-earmark-arrow-up-fill"></i>
+                                <span>Importar Planilha</span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
 
-                    <li class="sidebar-title">Administração</li>
-
-                    <li class="sidebar-item has-sub <?= ($menuActive ?? '') === 'usuarios' ? 'active' : '' ?>">
-                        <a href="" class="sidebar-link">
-                            <i class="bi bi-person-gear"></i>
-                            <span>Usuários</span>
-                        </a>
-                        <ul class="submenu">
-                            <li class="submenu-item <?= ($menuActive ?? '') === 'usuarios' && ($submenuActive ?? '') === 'novo' ? 'active' : '' ?>">
-                                <a href="<?= url('/usuarios/cadastrar') ?>" class="submenu-link">Novo</a>
-                            </li>
-                            <li class="submenu-item <?= ($menuActive ?? '') === 'usuarios' && ($submenuActive ?? '') === 'todos' ? 'active' : '' ?>">
-                                <a href="<?= url('/usuarios') ?>" class="submenu-link">Todos</a>
-                            </li>
-                        </ul>
-                    </li>
+                    <?php if (($userRole ?? '') === \App\Models\User::ROLE_ADMIN): ?>
+                        <li class="sidebar-title">Administração</li>
+                        <li class="sidebar-item has-sub <?= ($menuActive ?? '') === 'usuarios' ? 'active' : '' ?>">
+                            <a href="" class="sidebar-link">
+                                <i class="bi bi-person-gear"></i>
+                                <span>Usuários</span>
+                            </a>
+                            <ul class="submenu">
+                                <li class="submenu-item <?= ($menuActive ?? '') === 'usuarios' && ($submenuActive ?? '') === 'novo' ? 'active' : '' ?>">
+                                    <a href="<?= url('/usuarios/cadastrar') ?>" class="submenu-link">Novo</a>
+                                </li>
+                                <li class="submenu-item <?= ($menuActive ?? '') === 'usuarios' && ($submenuActive ?? '') === 'todos' ? 'active' : '' ?>">
+                                    <a href="<?= url('/usuarios') ?>" class="submenu-link">Todos</a>
+                                </li>
+                            </ul>
+                        </li>
+                    <?php endif; ?>
 
                     <li class="sidebar-title">Conta</li>
-
                     <li class="sidebar-item has-sub <?= ($menuActive ?? '') === 'conta' ? 'active' : '' ?>">
                         <a href="" class="sidebar-link">
                             <i class="bi bi-person-fill"></i>
@@ -143,7 +142,6 @@
                             </li>
                         </ul>
                     </li>
-
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link" data-bs-toggle="modal" data-bs-target="#modalSair">
                             <i class="bi bi-box-arrow-right"></i>
@@ -154,7 +152,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal Sair -->
     <div class="modal fade text-left" id="modalSair" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable" role="document">
@@ -182,10 +179,8 @@
             </div>
         </div>
     </div>
-
     <?= $this->section('content') ?>
 </div>
-
 <script src="<?= assets_mazer('/assets/static/js/components/dark.js') ?>"></script>
 <script src="<?= assets_mazer('/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js') ?>"></script>
 <script src="<?= assets_mazer('/assets/compiled/js/app.js') ?>"></script>
