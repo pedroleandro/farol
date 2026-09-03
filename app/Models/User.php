@@ -6,6 +6,36 @@ use App\Core\AbstractModel;
 
 class User extends AbstractModel
 {
+    public const ROLE_ADMIN = "admin";
+    public const ROLE_MANAGER = "manager";
+    public const ROLE_DISPATCHER = "dispatcher";
+    public const ROLE_STAKEHOLDER = "stakeholder";
+
+    public const ROLES = [
+        self::ROLE_ADMIN,
+        self::ROLE_MANAGER,
+        self::ROLE_DISPATCHER,
+        self::ROLE_STAKEHOLDER,
+    ];
+
+    public const ROLE_LABELS = [
+        self::ROLE_ADMIN => "Administrador",
+        self::ROLE_MANAGER => "Gerente",
+        self::ROLE_DISPATCHER => "Despachante",
+        self::ROLE_STAKEHOLDER => "Proprietário",
+    ];
+
+    public const ROLES_CAN_IMPORT = [
+        self::ROLE_ADMIN,
+        self::ROLE_MANAGER,
+    ];
+
+    public const ROLES_CAN_MANAGE_ORDERS = [
+        self::ROLE_ADMIN,
+        self::ROLE_MANAGER,
+        self::ROLE_DISPATCHER,
+    ];
+
     protected string $table = "users";
 
     protected array $fillable = [
@@ -57,9 +87,39 @@ class User extends AbstractModel
         return $this->attributes['role'] ?? null;
     }
 
+    public function getRoleLabel(): string
+    {
+        return self::ROLE_LABELS[$this->getRole()] ?? $this->getRole() ?? '—';
+    }
+
     public function isActive(): bool
     {
         return (bool)($this->attributes['is_active'] ?? false);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->getRole() === self::ROLE_ADMIN;
+    }
+
+    public function isManager(): bool
+    {
+        return $this->getRole() === self::ROLE_MANAGER;
+    }
+
+    public function isDispatcher(): bool
+    {
+        return $this->getRole() === self::ROLE_DISPATCHER;
+    }
+
+    public function isStakeholder(): bool
+    {
+        return $this->getRole() === self::ROLE_STAKEHOLDER;
+    }
+
+    public function hasRole(array $allowedRoles): bool
+    {
+        return in_array($this->getRole(), $allowedRoles, true);
     }
 
     public function setPassword(string $plainPassword): self
@@ -68,10 +128,6 @@ class User extends AbstractModel
         return $this;
     }
 
-    /**
-     * Busca um usuário ativo pelo e-mail. Retorna null se não existir
-     * ou se a conta estiver desativada/excluída.
-     */
     public static function findByEmail(string $email): ?self
     {
         /** @var self|null $user */

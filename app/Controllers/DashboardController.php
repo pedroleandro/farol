@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controllers;
+namespace app\Controllers\Admin;
 
 use App\Core\Auth;
 use App\Core\Controller;
@@ -20,7 +20,7 @@ class DashboardController extends Controller
 
         $user = Auth::user();
 
-        echo $this->view->render("dashboard/dashboard", [
+        echo $this->view->render("admin/dashboard/dashboard", [
             "title" => "Visão geral | " . APP_NAME,
             "userName" => $user->name ?? "",
             "userRole" => $user->role ?? "",
