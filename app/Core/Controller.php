@@ -21,4 +21,17 @@ class Controller
             return;
         }
     }
+
+    protected function render(string $template, array $data = []): string
+    {
+        $user = Auth::user();
+
+        $data = array_merge([
+            "userId" => $user->id ?? null,
+            "userName" => $user->name ?? "",
+            "userRole" => $user->role ?? "",
+        ], $data);
+
+        return $this->view->render($template, $data);
+    }
 }
