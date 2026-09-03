@@ -85,4 +85,4 @@ yarn-error.log*
 # ==============================================================================
 # Tema Mazer (se baixado via npm/build, não versionar o dist)
 # ==============================================================================
-resources/themes/mazer-1.0.0
+/resources/themes/dist/

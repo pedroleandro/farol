@@ -48,7 +48,7 @@ function assets(string $path = null): string
 
 function assets_mazer(string $path = null): string
 {
-    $base = appBaseUrl() . "/resources/themes/mazer-1.0.0/dist/assets";
+    $base = appBaseUrl() . "/resources/themes/dist";
 
     if ($path) {
         return $base . '/' . ltrim($path, '/');
