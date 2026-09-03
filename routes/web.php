@@ -1,5 +1,6 @@
 <?php
 
+use App\Core\Auth;
 use CoffeeCode\Router\Router;
 
 $router = new Router(APP_URL, "@");
@@ -15,15 +16,21 @@ $router->get("/", "WebController@index");
 
 /*
 |--------------------------------------------------------------------------
+| Rotas de Autenticação
+|--------------------------------------------------------------------------
+*/
+require __DIR__ . "/auth.php";
+
+/*
+|--------------------------------------------------------------------------
 | Rotas de Erro
 |--------------------------------------------------------------------------
 */
 $router->group(null);
 $router->get("/erro/{errorCode}", "ErrorController@index");
 
-
 $router->dispatch();
 
 if ($router->error()) {
-    var_dump($router->error());
+    redirect("/erro/" . $router->error());
 }
