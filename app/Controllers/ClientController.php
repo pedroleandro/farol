@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Message;
 use App\Models\Client;
+use App\Models\Order;
 use App\Models\User;
 use JetBrains\PhpStorm\NoReturn;
 
@@ -13,7 +14,6 @@ class ClientController extends Controller
     public function __construct()
     {
         parent::__construct("App");
-
         $this->requireRole(User::ROLES_CAN_MANAGE_ORDERS);
     }
 
@@ -22,9 +22,13 @@ class ClientController extends Controller
     {
         $clients = (new Client())->orderBy("name")->get();
 
+        $clientIds = array_map(fn(Client $c) => $c->getId(), $clients);
+        $clientsWithOrders = Order::clientIdsWithOrders($clientIds);
+
         echo $this->render("clients/index", [
             "title" => "Clientes | " . APP_NAME,
             "clients" => $clients,
+            "clientsWithOrders" => $clientsWithOrders,
         ]);
 
         clear_old();
@@ -150,10 +154,14 @@ class ClientController extends Controller
             return;
         }
 
-        // TODO (Fase 2 - Pedidos): antes de excluir, verificar se o
-        // cliente possui pedidos vinculados e bloquear a exclusão nesse
-        // caso, do mesmo jeito que o SIGETI faz com departamentos/chamados.
-        // Ex.: if ($client->existsOrders()) { Message::warning(...); return; }
+        if (Order::existsForClient($client->getId())) {
+            Message::warning(
+                "Este cliente possui pedidos vinculados e não pode ser excluído. " .
+                "Exclua ou reatribua os pedidos antes de remover o cliente."
+            );
+            redirect("/clientes");
+            return;
+        }
 
         try {
             $client->delete();
