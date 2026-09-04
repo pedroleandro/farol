@@ -25,15 +25,23 @@ class User extends AbstractModel
         self::ROLE_STAKEHOLDER => "Proprietário",
     ];
 
+    /** Papéis que podem importar planilha. */
     public const ROLES_CAN_IMPORT = [
         self::ROLE_ADMIN,
         self::ROLE_MANAGER,
     ];
 
+    /** Papéis que podem cadastrar/editar pedidos e clientes. */
     public const ROLES_CAN_MANAGE_ORDERS = [
         self::ROLE_ADMIN,
         self::ROLE_MANAGER,
         self::ROLE_DISPATCHER,
+    ];
+
+    /** Papéis que podem EXCLUIR pedidos — mais restrito que gerenciar. */
+    public const ROLES_CAN_DELETE_ORDERS = [
+        self::ROLE_ADMIN,
+        self::ROLE_MANAGER,
     ];
 
     protected string $table = "users";
