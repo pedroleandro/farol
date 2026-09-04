@@ -300,4 +300,24 @@ class Order extends AbstractModel
 
         return $candidate;
     }
+
+    public static function existsForClient(int $clientId): bool
+    {
+        return (new static())
+                ->where("client_id", "=", $clientId)
+                ->count() > 0;
+    }
+
+    public static function clientIdsWithOrders(array $clientIds): array
+    {
+        if (empty($clientIds)) {
+            return [];
+        }
+
+        $rows = (new static())
+            ->whereIn("client_id", $clientIds)
+            ->countGroupBy("client_id");
+
+        return array_map(static fn($row) => (int)$row["client_id"], $rows);
+    }
 }
