@@ -216,7 +216,6 @@
                                     <div class="alert alert-success mt-2 mb-0">
                                         <i class="bi bi-check-circle-fill me-1"></i>
                                         Entregue em <?= date('d/m/Y', strtotime($order->getDeliveryDate())) ?>
-                                        (preenchido automaticamente ao avançar o status).
                                     </div>
                                 <?php endif; ?>
 
