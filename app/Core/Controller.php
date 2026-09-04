@@ -22,13 +22,6 @@ class Controller
         }
     }
 
-    /**
-     * Renderiza uma view já injetando automaticamente os dados do
-     * usuário autenticado (id, nome, papel). Toda tela que exige
-     * login deve usar $this->render() em vez de $this->view->render()
-     * diretamente, para nunca esquecer de repassar o papel do usuário
-     * — o menu lateral depende dele para decidir o que exibir.
-     */
     protected function render(string $template, array $data = []): string
     {
         $user = Auth::user();
@@ -42,11 +35,6 @@ class Controller
         return $this->view->render($template, $data);
     }
 
-    /**
-     * Exige login e restringe o acesso a um conjunto de papéis.
-     * Uso típico no construtor do controller:
-     *   $this->requireRole(User::ROLES_CAN_MANAGE_ORDERS);
-     */
     protected function requireRole(array $allowedRoles): void
     {
         Auth::requireLogin();
