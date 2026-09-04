@@ -56,6 +56,20 @@
                                 </span>
                             </div>
                         </div>
+
+                        <div class="card-body pb-0">
+                            <div class="border rounded-3 p-3 d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <small class="text-muted d-block">Código de rastreio</small>
+                                    <strong id="trackingCode" class="fs-5"><?= htmlspecialchars($order->getTrackingCode()) ?></strong>
+                                </div>
+                                <button type="button" id="copyTrackingBtn" class="btn btn-sm btn-outline-primary" onclick="copyTrackingCode()">
+                                    <i class="bi bi-clipboard-fill me-1"></i>
+                                    <span id="copyTrackingBtnLabel">Copiar</span>
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="card-body">
                             <form action="<?= url('/pedidos/editar/' . $order->getId()) ?>" method="post" id="orderForm">
                                 <?= csrf_input() ?>
@@ -285,3 +299,24 @@
 <link rel="stylesheet" href="<?= assets_mazer('/assets/extensions/choices.js/public/assets/styles/choices.min.css') ?>">
 <script src="<?= assets_mazer('/assets/extensions/choices.js/public/assets/scripts/choices.min.js') ?>"></script>
 <script src="<?= assets('/js/order-form.js') ?>"></script>
+
+
+<script>
+    function copyTrackingCode() {
+        const code = document.getElementById('trackingCode').innerText;
+        const btn = document.getElementById('copyTrackingBtn');
+        const label = document.getElementById('copyTrackingBtnLabel');
+
+        navigator.clipboard.writeText(code).then(function () {
+            label.textContent = 'Copiado!';
+            btn.classList.remove('btn-outline-primary');
+            btn.classList.add('btn-success');
+
+            setTimeout(function () {
+                label.textContent = 'Copiar';
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-primary');
+            }, 2000);
+        });
+    }
+</script>
