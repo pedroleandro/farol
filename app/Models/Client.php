@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\AbstractModel;
+use PDO;
 
 class Client extends AbstractModel
 {
@@ -43,10 +44,6 @@ class Client extends AbstractModel
         return $this->attributes['state'] ?? null;
     }
 
-    /**
-     * "Cidade/UF" prontos para exibição, com fallback caso algum
-     * dos dois esteja vazio.
-     */
     public function getLocation(): string
     {
         $city = $this->getCity();
@@ -57,5 +54,32 @@ class Client extends AbstractModel
         }
 
         return $city ?? $state ?? '—';
+    }
+
+    public static function findByNameAndCity(string $name, ?string $city): ?self
+    {
+        $instance = new static();
+
+        $sql = "SELECT * FROM clients
+                WHERE UPPER(TRIM(name)) = UPPER(TRIM(:name))
+                  AND deleted_at IS NULL";
+
+        $params = ["name" => $name];
+
+        if ($city) {
+            $sql .= " AND UPPER(TRIM(city)) = UPPER(TRIM(:city))";
+            $params["city"] = $city;
+        } else {
+            $sql .= " AND (city IS NULL OR city = '')";
+        }
+
+        $sql .= " LIMIT 1";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute($params);
+        $statement->setFetchMode(PDO::FETCH_ASSOC);
+        $data = $statement->fetch();
+
+        return $data ? static::hydrate($data) : null;
     }
 }
