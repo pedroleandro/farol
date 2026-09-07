@@ -4,14 +4,12 @@
         'submenuActive' => 'todos',
         'userRole' => $userRole ?? '',
 ]) ?>
-
 <div id="main">
     <header class="mb-3">
         <a href="#" class="burger-btn d-block d-xl-none">
             <i class="bi bi-justify fs-3"></i>
         </a>
     </header>
-
     <div class="page-heading">
         <div class="page-title">
             <div class="row">
@@ -29,9 +27,7 @@
                 </div>
             </div>
         </div>
-
         <?= \App\Core\Message::render() ?>
-
         <div class="page-content">
             <section class="section">
                 <div class="card">
@@ -40,43 +36,50 @@
                             <i class="bi bi-people-fill me-2"></i>
                             Todos os Clientes
                         </h5>
-                        <a href="<?= url('/clientes/cadastrar') ?>" class="btn btn-primary btn-sm">
-                            <i class="bi bi-person-plus-fill me-1"></i>
-                            Novo Cliente
-                        </a>
+                        <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
+                            <a href="<?= url('/clientes/cadastrar') ?>" class="btn btn-primary btn-sm">
+                                <i class="bi bi-person-plus-fill me-1"></i>
+                                Novo Cliente
+                            </a>
+                        <?php endif; ?>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="table1">
-                                <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Nome</th>
-                                    <th>Cidade/UF</th>
-                                    <th>Ações</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <?php if (!empty($clients)): ?>
-                                    <?php foreach ($clients as $client): ?>
-                                        <?php $hasOrders = in_array($client->getId(), $clientsWithOrders ?? [], true); ?>
-                                        <tr>
-                                            <td><?= $client->getId() ?></td>
-                                            <td>
-                                                <i class="bi bi-person-fill text-primary me-1"></i>
-                                                <?= htmlspecialchars($client->getName()) ?>
-                                            </td>
-                                            <td>
-                                                <i class="bi bi-geo-alt-fill text-muted me-1"></i>
-                                                <?= htmlspecialchars($client->getLocation()) ?>
-                                            </td>
-                                            <td>
+
+                        <div class="mb-3">
+                            <input type="text" id="clientsSearch" class="form-control"
+                                   placeholder="Buscar por nome, cidade...">
+                        </div>
+
+                        <table class="table table-hover table-responsive-cards mb-0" id="clientsTable">
+                            <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nome</th>
+                                <th>Cidade/UF</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php if (!empty($clients)): ?>
+                                <?php foreach ($clients as $client): ?>
+                                    <?php $hasOrders = in_array($client->getId(), $clientsWithOrders ?? [], true); ?>
+                                    <tr>
+                                        <td data-label="ID"><?= $client->getId() ?></td>
+                                        <td data-label="Nome">
+                                            <i class="bi bi-person-fill text-primary me-1"></i>
+                                            <?= htmlspecialchars($client->getName()) ?>
+                                        </td>
+                                        <td data-label="Cidade/UF">
+                                            <i class="bi bi-geo-alt-fill text-muted me-1"></i>
+                                            <?= htmlspecialchars($client->getLocation()) ?>
+                                        </td>
+                                        <td data-label="Ações">
+                                            <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
                                                 <a href="<?= url('/clientes/editar/' . $client->getId()) ?>"
                                                    class="btn btn-sm btn-warning">
                                                     <i class="bi bi-pencil-fill"></i>
                                                     <span class="d-none d-xl-inline ms-1">Editar</span>
                                                 </a>
-
                                                 <?php if ($hasOrders): ?>
                                                     <button type="button" class="btn btn-sm btn-danger" disabled
                                                             title="Cliente possui pedidos vinculados e não pode ser excluído"
@@ -91,11 +94,11 @@
                                                         <i class="bi bi-trash-fill"></i>
                                                         <span class="d-none d-xl-inline ms-1">Excluir</span>
                                                     </button>
-
                                                     <div class="modal fade text-left"
                                                          id="modalExcluir<?= $client->getId() ?>"
                                                          tabindex="-1" role="dialog" aria-hidden="true">
-                                                        <div class="modal-dialog modal-dialog-centered" role="document">
+                                                        <div class="modal-dialog modal-dialog-centered"
+                                                             role="document">
                                                             <div class="modal-content">
                                                                 <div class="modal-header bg-danger">
                                                                     <h5 class="modal-title white">
@@ -103,7 +106,8 @@
                                                                         Excluir Cliente
                                                                     </h5>
                                                                     <button type="button" class="close"
-                                                                            data-bs-dismiss="modal" aria-label="Close">
+                                                                            data-bs-dismiss="modal"
+                                                                            aria-label="Close">
                                                                         <i data-feather="x"></i>
                                                                     </button>
                                                                 </div>
@@ -111,7 +115,8 @@
                                                                     Tem certeza que deseja excluir o cliente
                                                                     <strong><?= htmlspecialchars($client->getName()) ?></strong>?
                                                                     <br>
-                                                                    <small class="text-muted">Esta ação não poderá ser
+                                                                    <small class="text-muted">Esta ação não poderá
+                                                                        ser
                                                                         desfeita.</small>
                                                                 </div>
                                                                 <div class="modal-footer">
@@ -135,27 +140,35 @@
                                                         </div>
                                                     </div>
                                                 <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted fst-italic py-4">
-                                            <i class="bi bi-inbox-fill me-2"></i>
-                                            Nenhum cliente cadastrado ainda.
-                                            <a href="<?= url('/clientes/cadastrar') ?>">Cadastrar o primeiro</a>
+                                            <?php else: ?>
+                                                <span class="text-muted small">Somente leitura</span>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
-                                <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted fst-italic py-4">
+                                        <i class="bi bi-inbox-fill me-2"></i>
+                                        Nenhum cliente cadastrado ainda.
+                                        <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
+                                            <a href="<?= url('/clientes/cadastrar') ?>">Cadastrar o primeiro</a>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+
+                        <p id="clientsNoResults" class="text-muted fst-italic text-center py-3 d-none">
+                            Nenhum cliente encontrado para essa busca.
+                        </p>
+
                     </div>
                 </div>
             </section>
         </div>
     </div>
-
     <footer>
         <div class="footer clearfix mb-0 text-muted">
             <div class="float-start">
@@ -172,11 +185,19 @@
     </footer>
 </div>
 
+<script src="<?= assets('/js/table-search-paginate.js') ?>"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.forEach(function (el) {
             new bootstrap.Tooltip(el);
+        });
+
+        initTableSearchPagination({
+            tableId: "clientsTable",
+            searchInputId: "clientsSearch",
+            noResultsId: "clientsNoResults",
+            perPage: 10,
         });
     });
 </script>
