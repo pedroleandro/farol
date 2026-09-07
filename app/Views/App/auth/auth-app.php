@@ -23,8 +23,10 @@
     <div class="row h-100">
         <div class="col-lg-5 col-12">
             <div id="auth-left">
-                <div class="auth-logo">
-                    <a href=""><img src="<?= assets_mazer('/assets/compiled/svg/logo.svg') ?>" alt="Logo"></a>
+                <div>
+                    <a href="">
+                        <img src="<?= assets('/images/logo-horizontal.png') ?>" alt="Farol" class="auth-logo-img" width="100%">
+                    </a>
                 </div>
 
                 <?= $this->section('content') ?>

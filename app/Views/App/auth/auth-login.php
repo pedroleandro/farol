@@ -2,8 +2,7 @@
         "title" => $title ?? "Entrar | " . APP_NAME,
 ]) ?>
 
-<h1 class="auth-title">Farol</h1>
-<p class="auth-subtitle mb-5">Informe seus dados para fazer login.</p>
+<p class="auth-subtitle mb-5 mt-5">Informe seus dados para fazer login.</p>
 
 <?= \App\Core\Message::render() ?>
 
