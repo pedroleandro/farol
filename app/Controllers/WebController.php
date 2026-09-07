@@ -15,6 +15,7 @@ class WebController extends Controller
     #[NoReturn]
     public function index(): void
     {
+        redirect("/entrar");
         echo $this->view->render("home", [
             "title" => "Home | " . APP_NAME
         ]);
