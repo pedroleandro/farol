@@ -57,6 +57,8 @@
                                 <th>Cliente</th>
                                 <th>Cidade/UF</th>
                                 <th>Frete</th>
+                                <th>Motorista</th>
+                                <th>Preço/Produto</th>
                                 <th>Status</th>
                                 <th>Ações</th>
                             </tr>
@@ -80,6 +82,12 @@
                                         </td>
                                         <td data-label="Frete">
                                             <?= htmlspecialchars($order->getFreightTypeLabel()) ?>
+                                        </td>
+                                        <td data-label="Motorista">
+                                            <?= htmlspecialchars($order->getDriverName() ?? '—') ?>
+                                        </td>
+                                        <td data-label="Preço/Produto">
+                                            <?= htmlspecialchars($order->getFreightPerProductFormatted()) ?>
                                         </td>
                                         <td data-label="Status">
                                             <span class="badge <?= $order->getStatusBadgeClass() ?>">

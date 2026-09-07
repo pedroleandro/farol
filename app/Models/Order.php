@@ -58,6 +58,7 @@ class Order extends AbstractModel
         "order_date",
         "freight_type",
         "vehicle_type",
+        "driver_name",
         "freight_value",
         "loading_date",
         "delivery_date",
@@ -149,6 +150,32 @@ class Order extends AbstractModel
     public function getVehicleType(): ?string
     {
         return $this->attributes['vehicle_type'] ?? null;
+    }
+
+    protected ?string $driverName = null;
+
+    public function getDriverName(): ?string
+    {
+        return $this->attributes['driver_name'] ?? null;
+    }
+
+    public function getFreightPerProduct(): ?float
+    {
+        $value = $this->getFreightValue();
+        $qty = $this->getProductQty();
+
+        if ($value === null || !$qty) {
+            return null;
+        }
+
+        return round($value / $qty, 2);
+    }
+
+    public function getFreightPerProductFormatted(): string
+    {
+        $value = $this->getFreightPerProduct();
+
+        return $value !== null ? 'R$ ' . number_format($value, 2, ',', '.') : '—';
     }
 
     public function getFreightValue(): ?float

@@ -147,6 +147,21 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="col-12 col-md-4">
+                                        <div class="form-group">
+                                            <label for="driver_name" class="form-label">Motorista</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-person-badge-fill"></i></span>
+                                                <input type="text" name="driver_name" id="driver_name"
+                                                       class="form-control"
+                                                       placeholder="Nome do motorista"
+                                                       value="<?= old('driver_name') ?>">
+                                            </div>
+                                            <small class="text-muted">Campo opcional.</small>
+                                        </div>
+                                    </div>
+
                                     <div class="col-12 col-md-4">
                                         <div class="form-group">
                                             <label for="freight_value" class="form-label">Valor do Frete (R$)</label>
