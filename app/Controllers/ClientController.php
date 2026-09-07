@@ -28,7 +28,7 @@ class ClientController extends Controller
     #[NoReturn]
     public function index(): void
     {
-        $clients = (new Client())->orderBy("name")->get();
+        $clients = (new Client())->orderBy("created_at", "DESC")->get();
 
         $clientIds = array_map(fn(Client $c) => $c->getId(), $clients);
         $clientsWithOrders = Order::clientIdsWithOrders($clientIds);
