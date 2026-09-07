@@ -1,5 +1,5 @@
 <?php
-$col = $col ?? 'col-6 col-lg-3 col-md-6';
+$col = $col ?? 'col-12 col-sm-6 col-lg-3';
 $color = $color ?? 'blue';
 $icon = $icon ?? 'iconly-boldBag';
 $label = $label ?? '';

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\AbstractModel;
+use PDO;
 
 class Order extends AbstractModel
 {
@@ -25,7 +26,6 @@ class Order extends AbstractModel
         self::STATUS_DELIVERED => "bg-success",
     ];
 
-    /** Fluxo padrão de avanço: cada status aponta para o próximo. */
     public const STATUS_FLOW = [
         self::STATUS_IN_PRODUCTION => self::STATUS_AWAITING_LOADING,
         self::STATUS_AWAITING_LOADING => self::STATUS_IN_TRANSIT,
@@ -224,33 +224,10 @@ class Order extends AbstractModel
         return $this->getNextStatus() !== null && !$this->isPending();
     }
 
-    public function getDaysToLoading(): ?int
-    {
-        return $this->daysBetween($this->getOrderDate(), $this->getLoadingDate());
-    }
-
-    public function getTravelDays(): ?int
-    {
-        $end = $this->getDeliveryDate() ?? date('Y-m-d');
-        return $this->daysBetween($this->getLoadingDate(), $end);
-    }
-
     public function getTotalDays(): ?int
     {
         $end = $this->getDeliveryDate() ?? date('Y-m-d');
         return $this->daysBetween($this->getOrderDate(), $end);
-    }
-
-    public function getFreightPerProduct(): ?float
-    {
-        $value = $this->getFreightValue();
-        $qty = $this->getProductQty();
-
-        if ($value === null || !$qty) {
-            return null;
-        }
-
-        return round($value / $qty, 2);
     }
 
     public function isOnTime(): ?bool
@@ -319,5 +296,384 @@ class Order extends AbstractModel
             ->countGroupBy("client_id");
 
         return array_map(static fn($row) => (int)$row["client_id"], $rows);
+    }
+
+    public static function countCreatedToday(): int
+    {
+        return (new static())
+            ->where("created_at", ">=", date("Y-m-d 00:00:00"))
+            ->count();
+    }
+
+    public static function countAwaitingStatusUpdate(): int
+    {
+        $instance = new static();
+
+        $sql = "SELECT COUNT(*) FROM orders
+            WHERE deleted_at IS NULL
+              AND is_pending = 0
+              AND status IN ('in_production', 'awaiting_loading')
+              AND loading_date IS NOT NULL
+              AND loading_date <= CURDATE()";
+
+        return (int)$instance->connection->query($sql)->fetchColumn();
+    }
+
+    public static function countLate(): int
+    {
+        $instance = new static();
+
+        $sql = "SELECT COUNT(*) FROM orders
+            WHERE deleted_at IS NULL
+              AND status <> 'delivered'
+              AND expected_delivery IS NOT NULL
+              AND expected_delivery < CURDATE()";
+
+        return (int)$instance->connection->query($sql)->fetchColumn();
+    }
+
+    public static function countPending(): int
+    {
+        return (new static())->where("is_pending", "=", 1)->count();
+    }
+
+    /**
+     * @return Order[]
+     */
+    public static function recent(int $limit = 5): array
+    {
+        return (new static())->orderBy("created_at", "DESC")->limit($limit)->get();
+    }
+
+    /**
+     * Métodos para o Despachante
+     */
+    public static function availableOrderMonths(): array
+    {
+        $instance = new static();
+
+        $sql = "SELECT DISTINCT DATE_FORMAT(order_date, '%Y-%m') AS ym
+            FROM orders
+            WHERE deleted_at IS NULL AND order_date IS NOT NULL
+            ORDER BY ym DESC";
+
+        return $instance->connection->query($sql)->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
+    public static function countInMonth(string $yearMonth): int
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+
+        return (new static())
+            ->where("order_date", ">=", $start)
+            ->where("order_date", "<=", $end)
+            ->count();
+    }
+
+    public static function countAwaitingStatusUpdateInMonth(string $yearMonth): int
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+        $instance = new static();
+
+        $sql = "SELECT COUNT(*) FROM orders
+            WHERE deleted_at IS NULL
+              AND is_pending = 0
+              AND status IN ('in_production', 'awaiting_loading')
+              AND loading_date IS NOT NULL
+              AND loading_date <= CURDATE()
+              AND order_date BETWEEN :start AND :end";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["start" => $start, "end" => $end]);
+
+        return (int)$statement->fetchColumn();
+    }
+
+    public static function countLateInMonth(string $yearMonth): int
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+        $instance = new static();
+
+        $sql = "SELECT COUNT(*) FROM orders
+            WHERE deleted_at IS NULL
+              AND status <> 'delivered'
+              AND expected_delivery IS NOT NULL
+              AND expected_delivery < CURDATE()
+              AND order_date BETWEEN :start AND :end";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["start" => $start, "end" => $end]);
+
+        return (int)$statement->fetchColumn();
+    }
+
+    public static function countPendingInMonth(string $yearMonth): int
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+
+        return (new static())
+            ->where("is_pending", "=", 1)
+            ->where("order_date", ">=", $start)
+            ->where("order_date", "<=", $end)
+            ->count();
+    }
+
+    /**
+     * @return Order[]
+     */
+    public static function recentInMonth(string $yearMonth, int $limit = 10): array
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+
+        return (new static())
+            ->where("order_date", ">=", $start)
+            ->where("order_date", "<=", $end)
+            ->orderBy("order_date", "DESC")
+            ->limit($limit)
+            ->get();
+    }
+
+    private static function monthRange(string $yearMonth): array
+    {
+        $start = $yearMonth . "-01";
+        $end = date("Y-m-t", strtotime($start));
+
+        return [$start, $end];
+    }
+
+    /**
+     * Métodos do Gerente
+     */
+    public static function sumFreightValueInMonth(string $yearMonth): float
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+        $instance = new static();
+
+        $sql = "SELECT COALESCE(SUM(freight_value), 0) AS total
+            FROM orders
+            WHERE deleted_at IS NULL AND order_date BETWEEN :start AND :end";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["start" => $start, "end" => $end]);
+
+        return (float)$statement->fetchColumn();
+    }
+
+    public static function onTimeRateInMonth(string $yearMonth): ?float
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+
+        $delivered = (new static())
+            ->where("status", "=", self::STATUS_DELIVERED)
+            ->where("order_date", ">=", $start)
+            ->where("order_date", "<=", $end)
+            ->get();
+
+        if (empty($delivered)) {
+            return null;
+        }
+
+        $onTime = 0;
+        foreach ($delivered as $order) {
+            if ($order->isOnTime()) {
+                $onTime++;
+            }
+        }
+
+        return round(($onTime / count($delivered)) * 100, 1);
+    }
+
+    public static function averageDeliveryDaysInMonth(string $yearMonth): ?float
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+
+        $delivered = (new static())
+            ->where("status", "=", self::STATUS_DELIVERED)
+            ->where("order_date", ">=", $start)
+            ->where("order_date", "<=", $end)
+            ->get();
+
+        if (empty($delivered)) {
+            return null;
+        }
+
+        $total = 0;
+        $count = 0;
+
+        foreach ($delivered as $order) {
+            $days = $order->getTotalDays();
+            if ($days !== null) {
+                $total += $days;
+                $count++;
+            }
+        }
+
+        return $count ? round($total / $count, 1) : null;
+    }
+
+    public static function statusBreakdownInMonth(string $yearMonth): array
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+        $instance = new static();
+
+        $sql = "SELECT status, COUNT(*) AS total
+            FROM orders
+            WHERE deleted_at IS NULL AND order_date BETWEEN :start AND :end
+            GROUP BY status";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["start" => $start, "end" => $end]);
+
+        $map = [];
+        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $map[$row["status"]] = (int)$row["total"];
+        }
+
+        return $map;
+    }
+
+    public static function freightValueByTypeInMonth(string $yearMonth): array
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+        $instance = new static();
+
+        $sql = "SELECT freight_type, COALESCE(SUM(freight_value), 0) AS total
+            FROM orders
+            WHERE deleted_at IS NULL AND freight_type IS NOT NULL
+              AND order_date BETWEEN :start AND :end
+            GROUP BY freight_type";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["start" => $start, "end" => $end]);
+
+        $map = [];
+        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $map[$row["freight_type"]] = (float)$row["total"];
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array<int, int> [dia => quantidade]
+     */
+    public static function ordersByDayInMonth(string $yearMonth): array
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+        $daysInMonth = (int)date("t", strtotime($start));
+        $counts = array_fill(1, $daysInMonth, 0);
+
+        $instance = new static();
+
+        $sql = "SELECT DAY(order_date) AS d, COUNT(*) AS total
+            FROM orders
+            WHERE deleted_at IS NULL AND order_date BETWEEN :start AND :end
+            GROUP BY DAY(order_date)";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["start" => $start, "end" => $end]);
+
+        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $counts[(int)$row["d"]] = (int)$row["total"];
+        }
+
+        return $counts;
+    }
+
+    public static function countDueSoon(int $daysAhead = 3): int
+    {
+        $instance = new static();
+
+        $sql = "SELECT COUNT(*) FROM orders
+            WHERE deleted_at IS NULL
+              AND status <> 'delivered'
+              AND expected_delivery IS NOT NULL
+              AND expected_delivery BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY)";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["days" => $daysAhead]);
+
+        return (int)$statement->fetchColumn();
+    }
+
+    /**
+     * Métodos do Proprietário
+     */
+
+    public static function availableOrderYears(): array
+    {
+        $instance = new static();
+
+        $sql = "SELECT DISTINCT YEAR(order_date) AS y
+            FROM orders
+            WHERE deleted_at IS NULL AND order_date IS NOT NULL
+            ORDER BY y DESC";
+
+        return array_map("intval", $instance->connection->query($sql)->fetchAll(\PDO::FETCH_COLUMN));
+    }
+
+    public static function sumFreightValueInYear(int $year): float
+    {
+        $instance = new static();
+
+        $sql = "SELECT COALESCE(SUM(freight_value), 0) AS total
+            FROM orders
+            WHERE deleted_at IS NULL AND YEAR(order_date) = :year";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["year" => $year]);
+
+        return (float)$statement->fetchColumn();
+    }
+
+    public static function freightValueByTypeInYear(int $year): array
+    {
+        $instance = new static();
+
+        $sql = "SELECT freight_type, COALESCE(SUM(freight_value), 0) AS total
+            FROM orders
+            WHERE deleted_at IS NULL AND freight_type IS NOT NULL AND YEAR(order_date) = :year
+            GROUP BY freight_type";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["year" => $year]);
+
+        $map = [];
+        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $map[$row["freight_type"]] = (float)$row["total"];
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array<int, float> [mês 1-12 => valor]
+     */
+    public static function freightValueByMonthInYear(int $year): array
+    {
+        $counts = array_fill(1, 12, 0.0);
+        $instance = new static();
+
+        $sql = "SELECT MONTH(order_date) AS m, COALESCE(SUM(freight_value), 0) AS total
+            FROM orders
+            WHERE deleted_at IS NULL AND YEAR(order_date) = :year
+            GROUP BY MONTH(order_date)";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["year" => $year]);
+
+        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $counts[(int)$row["m"]] = (float)$row["total"];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Métodos do Cliente
+     */
+    public static function findByTrackingCode(string $code): ?self
+    {
+        return (new static())->where("tracking_code", "=", $code)->first();
     }
 }

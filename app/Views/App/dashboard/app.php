@@ -11,6 +11,7 @@
     <link rel="stylesheet"
           href="<?= assets_mazer('/assets/extensions/datatables.net-bs5/css/dataTables.bootstrap5.min.css') ?>">
     <link rel="stylesheet" href="<?= assets_mazer('/assets/compiled/css/table-datatable-jquery.css') ?>">
+    <link rel="stylesheet" href="<?= assets('/css/dashboard.css') ?>">
 </head>
 <body>
 <script src="<?= assets_mazer('/assets/static/js/initTheme.js') ?>"></script>
