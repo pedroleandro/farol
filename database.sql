@@ -1,134 +1,154 @@
--- ===================================================================
--- FAROL — Estrutura do banco de dados
--- Papéis via enum simples na tabela users (sem tabelas de RBAC).
--- Campos de verificação de e-mail e reset de senha mantidos para uso
--- futuro, mas não utilizados na primeira versão.
--- ===================================================================
-
-CREATE TABLE users
+create table clients
 (
-    id                          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name                        VARCHAR(150)                       NOT NULL,
-    email                       VARCHAR(150)                       NOT NULL,
-    password                    VARCHAR(255)                       NOT NULL,
-    role                        ENUM('admin', 'manager', 'operator', 'viewer') NOT NULL DEFAULT 'viewer',
-    avatar                      VARCHAR(255)                       NULL,
-    is_active                   TINYINT(1)  DEFAULT 1               NOT NULL,
-
-    -- reservado para uso futuro (não implementado na v1)
-    email_verified_at           DATETIME                           NULL,
-    email_verification_token    VARCHAR(64)                        NULL,
-    email_verification_sent_at  DATETIME                           NULL,
-    reset_token                 VARCHAR(64)                        NULL,
-    reset_expires_at            DATETIME                           NULL,
-
-    created_at                  DATETIME    DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at                  DATETIME    DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at                  DATETIME                           NULL,
-
-    CONSTRAINT uq_users_email UNIQUE (email)
+    id         bigint unsigned auto_increment
+        primary key,
+    name       varchar(150)                       not null,
+    city       varchar(100)                       null,
+    state      char(2)                            null,
+    created_at datetime default CURRENT_TIMESTAMP not null,
+    updated_at datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    deleted_at datetime                           null
 );
 
--- -------------------------------------------------------------------
+create index idx_clients_name
+    on clients (name);
 
-CREATE TABLE sessions
+create table orders
 (
-    id            VARCHAR(128)                       NOT NULL PRIMARY KEY,
-    user_id       BIGINT UNSIGNED                    NULL,
-    ip_address    VARCHAR(45)                        NULL,
-    user_agent    VARCHAR(255)                       NULL,
-    payload       LONGTEXT                           NOT NULL,
-    last_activity INT UNSIGNED                       NOT NULL,
-    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-    CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    id                bigint unsigned auto_increment
+        primary key,
+    order_number      varchar(20)                                                                                                not null,
+    tracking_code     varchar(20)                                                                                                null,
+    client_id         bigint unsigned                                                                                            not null,
+    product_qty       int unsigned                                                                                               null,
+    item_qty          int unsigned                                                                                               null,
+    invoice_number    varchar(20)                                                                                                null,
+    order_date        date                                                                                                       null,
+    freight_type      enum ('own_fleet', 'cif_carrier', 'fob_client')                                                            null,
+    vehicle_type      varchar(50)                                                                                                null,
+    driver_name       varchar(150)                                                                                               null,
+    freight_value     decimal(12, 2)                                                                                             null,
+    loading_date      date                                                                                                       null,
+    delivery_date     date                                                                                                       null,
+    expected_delivery date                                                                                                       null,
+    status            enum ('in_production', 'awaiting_loading', 'in_transit', 'delivered', 'pending') default 'pending'         not null,
+    is_pending        tinyint(1)                                                                       default 0                 not null,
+    source            enum ('spreadsheet', 'system')                                                   default 'system'          not null,
+    created_at        datetime                                                                         default CURRENT_TIMESTAMP not null,
+    updated_at        datetime                                                                         default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    deleted_at        datetime                                                                                                   null,
+    constraint tracking_code
+        unique (tracking_code),
+    constraint uq_orders_number
+        unique (order_number),
+    constraint fk_orders_client
+        foreign key (client_id) references clients (id)
+            on delete cascade
 );
 
-CREATE INDEX idx_sessions_last_activity ON sessions (last_activity);
-CREATE INDEX idx_sessions_user ON sessions (user_id);
+create index idx_orders_client
+    on orders (client_id);
 
--- -------------------------------------------------------------------
+create index idx_orders_date
+    on orders (order_date);
 
-CREATE TABLE audit_logs
+create index idx_orders_status
+    on orders (status);
+
+create table users
 (
-    id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id     BIGINT UNSIGNED                    NULL,
-    event       VARCHAR(100)                       NOT NULL,
-    description VARCHAR(255)                       NULL,
-    ip_address  VARCHAR(45)                        NULL,
-    user_agent  VARCHAR(255)                       NULL,
-    metadata    JSON                               NULL,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-    CONSTRAINT fk_audit_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
+    id                         bigint unsigned auto_increment
+        primary key,
+    name                       varchar(150)                                                                     not null,
+    email                      varchar(150)                                                                     not null,
+    password                   varchar(255)                                                                     not null,
+    role                       enum ('admin', 'manager', 'dispatcher', 'stakeholder') default 'dispatcher'      not null,
+    avatar                     varchar(255)                                                                     null,
+    is_active                  tinyint(1)                                             default 1                 not null,
+    email_verified_at          datetime                                                                         null,
+    email_verification_token   varchar(64)                                                                      null,
+    email_verification_sent_at datetime                                                                         null,
+    reset_token                varchar(64)                                                                      null,
+    reset_expires_at           datetime                                                                         null,
+    created_at                 datetime                                               default CURRENT_TIMESTAMP not null,
+    updated_at                 datetime                                               default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
+    deleted_at                 datetime                                                                         null,
+    constraint uq_users_email
+        unique (email)
 );
 
-CREATE INDEX idx_audit_user_event ON audit_logs (user_id, event, created_at);
-
--- -------------------------------------------------------------------
-
-CREATE TABLE clients
+create table audit_logs
 (
-    id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name       VARCHAR(150)                       NOT NULL,
-    city       VARCHAR(100)                       NULL,
-    state      CHAR(2)                            NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at DATETIME                           NULL
+    id          bigint unsigned auto_increment
+        primary key,
+    user_id     bigint unsigned                    null,
+    event       varchar(100)                       not null,
+    description varchar(255)                       null,
+    ip_address  varchar(45)                        null,
+    user_agent  varchar(255)                       null,
+    metadata    json                               null,
+    created_at  datetime default CURRENT_TIMESTAMP not null,
+    constraint fk_audit_user
+        foreign key (user_id) references users (id)
+            on delete set null
 );
 
-CREATE INDEX idx_clients_name ON clients (name);
+create index idx_audit_user_event
+    on audit_logs (user_id, event, created_at);
 
--- -------------------------------------------------------------------
-
-CREATE TABLE orders
+create table imports
 (
-    id                 BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    order_number       VARCHAR(20)                        NOT NULL,
-    client_id          BIGINT UNSIGNED                    NOT NULL,
-
-    product_qty        INT UNSIGNED                       NULL,
-    item_qty           INT UNSIGNED                       NULL,
-    invoice_number     VARCHAR(20)                        NULL,
-    order_date         DATE                               NULL,
-
-    freight_type       ENUM('own_fleet', 'cif_carrier', 'fob_client') NULL,
-    vehicle_type       VARCHAR(50)                        NULL,
-    freight_value      DECIMAL(12, 2)                     NULL,
-
-    loading_date       DATE                               NULL,
-    delivery_date      DATE                               NULL,
-    expected_delivery  DATE                               NULL,
-
-    status             ENUM('in_production', 'awaiting_loading', 'in_transit', 'delivered', 'pending')
-                                                           NOT NULL DEFAULT 'pending',
-    source             ENUM('spreadsheet', 'system')      NOT NULL DEFAULT 'system',
-
-    created_at         DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at         DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at         DATETIME                           NULL,
-
-    CONSTRAINT uq_orders_number UNIQUE (order_number),
-    CONSTRAINT fk_orders_client FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE
+    id            bigint unsigned auto_increment
+        primary key,
+    user_id       bigint unsigned                        not null,
+    file_name     varchar(255)                           not null,
+    total_rows    int unsigned default '0'               not null,
+    created_count int unsigned default '0'               not null,
+    updated_count int unsigned default '0'               not null,
+    error_count   int unsigned default '0'               not null,
+    created_at    datetime     default CURRENT_TIMESTAMP not null,
+    constraint fk_imports_user
+        foreign key (user_id) references users (id)
 );
 
-CREATE INDEX idx_orders_status ON orders (status);
-CREATE INDEX idx_orders_client ON orders (client_id);
-CREATE INDEX idx_orders_date ON orders (order_date);
-
--- -------------------------------------------------------------------
-
-CREATE TABLE imports
+create table order_status_history
 (
-    id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id        BIGINT UNSIGNED                    NOT NULL,
-    file_name      VARCHAR(255)                       NOT NULL,
-    total_rows     INT UNSIGNED DEFAULT 0             NOT NULL,
-    created_count  INT UNSIGNED DEFAULT 0             NOT NULL,
-    updated_count  INT UNSIGNED DEFAULT 0             NOT NULL,
-    error_count    INT UNSIGNED DEFAULT 0             NOT NULL,
-    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-    CONSTRAINT fk_imports_user FOREIGN KEY (user_id) REFERENCES users (id)
+    id          bigint unsigned auto_increment
+        primary key,
+    order_id    bigint unsigned                    not null,
+    user_id     bigint unsigned                    null,
+    from_status varchar(30)                        null,
+    to_status   varchar(30)                        not null,
+    created_at  datetime default CURRENT_TIMESTAMP not null,
+    constraint fk_status_history_order
+        foreign key (order_id) references orders (id)
+            on delete cascade,
+    constraint fk_status_history_user
+        foreign key (user_id) references users (id)
+            on delete set null
 );
+
+create index idx_status_history_order
+    on order_status_history (order_id, created_at);
+
+create table sessions
+(
+    id            varchar(128)                       not null
+        primary key,
+    user_id       bigint unsigned                    null,
+    ip_address    varchar(45)                        null,
+    user_agent    varchar(255)                       null,
+    payload       longtext                           not null,
+    last_activity int unsigned                       not null,
+    created_at    datetime default CURRENT_TIMESTAMP not null,
+    constraint fk_sessions_user
+        foreign key (user_id) references users (id)
+            on delete cascade
+);
+
+create index idx_sessions_last_activity
+    on sessions (last_activity);
+
+create index idx_sessions_user
+    on sessions (user_id);
+
