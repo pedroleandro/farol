@@ -2,7 +2,10 @@
 
 namespace App\Controllers;
 
+use App\Core\AuditLog;
+use App\Core\Auth;
 use App\Core\Controller;
+use App\Core\LogEvent;
 use App\Core\Message;
 use App\Models\Client;
 use App\Models\Order;
@@ -11,10 +14,15 @@ use JetBrains\PhpStorm\NoReturn;
 
 class ClientController extends Controller
 {
+    private const ROLES_CAN_VIEW_ONLY = [
+        User::ROLE_STAKEHOLDER,
+    ];
+
     public function __construct()
     {
         parent::__construct("App");
-        $this->requireRole(User::ROLES_CAN_MANAGE_ORDERS);
+
+        $this->requireRole([...User::ROLES_CAN_MANAGE_ORDERS, ...self::ROLES_CAN_VIEW_ONLY]);
     }
 
     #[NoReturn]
@@ -37,6 +45,8 @@ class ClientController extends Controller
     #[NoReturn]
     public function create(): void
     {
+        $this->blockViewOnly();
+
         echo $this->render("clients/create", [
             "title" => "Novo Cliente | " . APP_NAME,
         ]);
@@ -47,6 +57,7 @@ class ClientController extends Controller
     #[NoReturn]
     public function store(?array $data): void
     {
+        $this->blockViewOnly();
         $this->validateCsrfToken($data ?? [], "/clientes/cadastrar");
 
         $client = new Client();
@@ -70,6 +81,11 @@ class ClientController extends Controller
             }
 
             $client->save();
+
+            AuditLog::record(LogEvent::CLIENT_CREATED, Auth::user()->id ?? null, [
+                "client_id" => $client->getId(),
+                "client_name" => $client->getName(),
+            ]);
         } catch (\InvalidArgumentException $e) {
             Message::error($e->getMessage());
             redirect("/clientes/cadastrar");
@@ -83,6 +99,8 @@ class ClientController extends Controller
     #[NoReturn]
     public function edit(?array $data): void
     {
+        $this->blockViewOnly();
+
         $client = Client::find((int)($data["id"] ?? 0));
 
         if (!$client) {
@@ -102,6 +120,7 @@ class ClientController extends Controller
     #[NoReturn]
     public function update(?array $data): void
     {
+        $this->blockViewOnly();
         $this->validateCsrfToken($data ?? [], "/clientes/editar/" . ($data["id"] ?? ''));
 
         $client = Client::find((int)($data["id"] ?? 0));
@@ -131,6 +150,11 @@ class ClientController extends Controller
             }
 
             $client->save();
+
+            AuditLog::record(LogEvent::CLIENT_UPDATED, Auth::user()->id ?? null, [
+                "client_id" => $client->getId(),
+                "client_name" => $client->getName(),
+            ]);
         } catch (\InvalidArgumentException $e) {
             Message::error($e->getMessage());
             redirect("/clientes/editar/" . $client->getId());
@@ -144,6 +168,7 @@ class ClientController extends Controller
     #[NoReturn]
     public function destroy(?array $data): void
     {
+        $this->blockViewOnly();
         $this->validateCsrfToken($data ?? [], "/clientes");
 
         $client = Client::find((int)($data["id"] ?? 0));
@@ -164,7 +189,15 @@ class ClientController extends Controller
         }
 
         try {
+            $clientId = $client->getId();
+            $clientName = $client->getName();
+
             $client->delete();
+
+            AuditLog::record(LogEvent::CLIENT_DELETED, Auth::user()->id ?? null, [
+                "client_id" => $clientId,
+                "client_name" => $clientName,
+            ]);
         } catch (\InvalidArgumentException $e) {
             Message::error($e->getMessage());
             redirect("/clientes");
@@ -173,5 +206,15 @@ class ClientController extends Controller
 
         Message::success("Cliente excluído com sucesso.");
         redirect("/clientes");
+    }
+
+    private function blockViewOnly(): void
+    {
+        $role = Auth::user()->role ?? null;
+
+        if (in_array($role, self::ROLES_CAN_VIEW_ONLY, true)) {
+            Message::warning("Seu perfil tem acesso somente para visualização.");
+            redirect("/clientes");
+        }
     }
 }
