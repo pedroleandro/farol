@@ -101,7 +101,7 @@
                                                              role="document">
                                                             <div class="modal-content">
                                                                 <div class="modal-header bg-danger">
-                                                                    <h5 class="modal-title white">
+                                                                    <h5 class="modal-title text-white">
                                                                         <i class="bi bi-trash-fill me-2"></i>
                                                                         Excluir Cliente
                                                                     </h5>
@@ -111,19 +111,16 @@
                                                                         <i data-feather="x"></i>
                                                                     </button>
                                                                 </div>
-                                                                <div class="modal-body">
+                                                                <div class="modal-body" style="overflow-wrap: break-word; word-break: break-all;">
                                                                     Tem certeza que deseja excluir o cliente
                                                                     <strong><?= htmlspecialchars($client->getName()) ?></strong>?
-                                                                    <br>
-                                                                    <small class="text-muted">Esta ação não poderá
-                                                                        ser
-                                                                        desfeita.</small>
+                                                                    <small class="text-muted d-block mt-1">Esta ação não poderá ser desfeita.</small>
                                                                 </div>
                                                                 <div class="modal-footer">
                                                                     <button type="button"
                                                                             class="btn btn-light-secondary"
                                                                             data-bs-dismiss="modal">
-                                                                        <span class="d-none d-sm-block">Cancelar</span>
+                                                                        Cancelar
                                                                     </button>
                                                                     <form action="<?= url('/clientes/excluir/' . $client->getId()) ?>"
                                                                           method="POST" class="d-inline">
@@ -132,7 +129,7 @@
                                                                                value="DELETE">
                                                                         <button type="submit"
                                                                                 class="btn btn-danger ms-1">
-                                                                            <span class="d-none d-sm-block">Confirmar</span>
+                                                                            Confirmar
                                                                         </button>
                                                                     </form>
                                                                 </div>

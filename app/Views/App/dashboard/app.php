@@ -158,7 +158,7 @@
         <div class="modal-dialog modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title text-white">Pronto para sair?</h5>
+                    <h5 class="modal-title">Pronto para sair?</h5>
                     <button type="button" class="close rounded-pill" data-bs-dismiss="modal" aria-label="Close">
                         <i data-feather="x"></i>
                     </button>
@@ -168,12 +168,12 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn" data-bs-dismiss="modal">
-                        <span class="d-none d-sm-block">Cancelar</span>
+                        Cancelar
                     </button>
                     <form action="<?= url('/sair') ?>" method="post">
                         <?= csrf_input() ?>
                         <button type="submit" class="btn btn-primary ms-1">
-                            <span class="d-none d-sm-block">Confirmar</span>
+                            Confirmar
                         </button>
                     </form>
                 </div>
