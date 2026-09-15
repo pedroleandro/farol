@@ -69,7 +69,6 @@
                             <span>Dashboard</span>
                         </a>
                     </li>
-                    <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
                     <li class="sidebar-title">Gerenciamento</li>
                     <li class="sidebar-item has-sub <?= ($menuActive ?? '') === 'pedidos' ? 'active' : '' ?>">
                         <a href="" class="sidebar-link">
@@ -99,7 +98,6 @@
                             </li>
                         </ul>
                     </li>
-                    <?php endif; ?>
 
                     <?php if (in_array($userRole ?? '', \App\Models\User::ROLES_CAN_IMPORT)): ?>
                         <li class="sidebar-item <?= ($menuActive ?? '') === 'importar' ? 'active' : '' ?>">

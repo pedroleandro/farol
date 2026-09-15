@@ -36,12 +36,10 @@
                             <i class="bi bi-people-fill me-2"></i>
                             Todos os Clientes
                         </h5>
-                        <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
-                            <a href="<?= url('/clientes/cadastrar') ?>" class="btn btn-primary btn-sm">
-                                <i class="bi bi-person-plus-fill me-1"></i>
-                                Novo Cliente
-                            </a>
-                        <?php endif; ?>
+                        <a href="<?= url('/clientes/cadastrar') ?>" class="btn btn-primary btn-sm">
+                            <i class="bi bi-person-plus-fill me-1"></i>
+                            Novo Cliente
+                        </a>
                     </div>
                     <div class="card-body">
 
@@ -74,71 +72,67 @@
                                             <?= htmlspecialchars($client->getLocation()) ?>
                                         </td>
                                         <td data-label="Ações">
-                                            <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
-                                                <a href="<?= url('/clientes/editar/' . $client->getId()) ?>"
-                                                   class="btn btn-sm btn-warning">
-                                                    <i class="bi bi-pencil-fill"></i>
-                                                    <span class="d-none d-xl-inline ms-1">Editar</span>
-                                                </a>
-                                                <?php if ($hasOrders): ?>
-                                                    <button type="button" class="btn btn-sm btn-danger" disabled
-                                                            title="Cliente possui pedidos vinculados e não pode ser excluído"
-                                                            data-bs-toggle="tooltip">
-                                                        <i class="bi bi-trash-fill"></i>
-                                                        <span class="d-none d-xl-inline ms-1">Excluir</span>
-                                                    </button>
-                                                <?php else: ?>
-                                                    <button type="button" class="btn btn-sm btn-danger"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#modalExcluir<?= $client->getId() ?>">
-                                                        <i class="bi bi-trash-fill"></i>
-                                                        <span class="d-none d-xl-inline ms-1">Excluir</span>
-                                                    </button>
-                                                    <div class="modal fade text-left"
-                                                         id="modalExcluir<?= $client->getId() ?>"
-                                                         tabindex="-1" role="dialog" aria-hidden="true">
-                                                        <div class="modal-dialog modal-dialog-centered"
-                                                             role="document">
-                                                            <div class="modal-content">
-                                                                <div class="modal-header bg-danger">
-                                                                    <h5 class="modal-title text-white">
-                                                                        <i class="bi bi-trash-fill me-2"></i>
-                                                                        Excluir Cliente
-                                                                    </h5>
-                                                                    <button type="button" class="close"
-                                                                            data-bs-dismiss="modal"
-                                                                            aria-label="Close">
-                                                                        <i data-feather="x"></i>
+                                            <a href="<?= url('/clientes/editar/' . $client->getId()) ?>"
+                                               class="btn btn-sm btn-warning">
+                                                <i class="bi bi-pencil-fill"></i>
+                                                <span class="d-none d-xl-inline ms-1">Editar</span>
+                                            </a>
+                                            <?php if ($hasOrders): ?>
+                                                <button type="button" class="btn btn-sm btn-danger" disabled
+                                                        title="Cliente possui pedidos vinculados e não pode ser excluído"
+                                                        data-bs-toggle="tooltip">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                    <span class="d-none d-xl-inline ms-1">Excluir</span>
+                                                </button>
+                                            <?php else: ?>
+                                                <button type="button" class="btn btn-sm btn-danger"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modalExcluir<?= $client->getId() ?>">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                    <span class="d-none d-xl-inline ms-1">Excluir</span>
+                                                </button>
+                                                <div class="modal fade text-left"
+                                                     id="modalExcluir<?= $client->getId() ?>"
+                                                     tabindex="-1" role="dialog" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered"
+                                                         role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header bg-danger">
+                                                                <h5 class="modal-title text-white">
+                                                                    <i class="bi bi-trash-fill me-2"></i>
+                                                                    Excluir Cliente
+                                                                </h5>
+                                                                <button type="button" class="close"
+                                                                        data-bs-dismiss="modal"
+                                                                        aria-label="Close">
+                                                                    <i data-feather="x"></i>
+                                                                </button>
+                                                            </div>
+                                                            <div class="modal-body" style="overflow-wrap: break-word; word-break: break-all;">
+                                                                Tem certeza que deseja excluir o cliente
+                                                                <strong><?= htmlspecialchars($client->getName()) ?></strong>?
+                                                                <small class="text-muted d-block mt-1">Esta ação não poderá ser desfeita.</small>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button"
+                                                                        class="btn btn-light-secondary"
+                                                                        data-bs-dismiss="modal">
+                                                                    Cancelar
+                                                                </button>
+                                                                <form action="<?= url('/clientes/excluir/' . $client->getId()) ?>"
+                                                                      method="POST" class="d-inline">
+                                                                    <?= csrf_input() ?>
+                                                                    <input type="hidden" name="_method"
+                                                                           value="DELETE">
+                                                                    <button type="submit"
+                                                                            class="btn btn-danger ms-1">
+                                                                        Confirmar
                                                                     </button>
-                                                                </div>
-                                                                <div class="modal-body" style="overflow-wrap: break-word; word-break: break-all;">
-                                                                    Tem certeza que deseja excluir o cliente
-                                                                    <strong><?= htmlspecialchars($client->getName()) ?></strong>?
-                                                                    <small class="text-muted d-block mt-1">Esta ação não poderá ser desfeita.</small>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button"
-                                                                            class="btn btn-light-secondary"
-                                                                            data-bs-dismiss="modal">
-                                                                        Cancelar
-                                                                    </button>
-                                                                    <form action="<?= url('/clientes/excluir/' . $client->getId()) ?>"
-                                                                          method="POST" class="d-inline">
-                                                                        <?= csrf_input() ?>
-                                                                        <input type="hidden" name="_method"
-                                                                               value="DELETE">
-                                                                        <button type="submit"
-                                                                                class="btn btn-danger ms-1">
-                                                                            Confirmar
-                                                                        </button>
-                                                                    </form>
-                                                                </div>
+                                                                </form>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                <?php endif; ?>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Somente leitura</span>
+                                                </div>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -148,9 +142,10 @@
                                     <td colspan="4" class="text-center text-muted fst-italic py-4">
                                         <i class="bi bi-inbox-fill me-2"></i>
                                         Nenhum cliente cadastrado ainda.
-                                        <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
-                                            <a href="<?= url('/clientes/cadastrar') ?>">Cadastrar o primeiro</a>
-                                        <?php endif; ?>
+                                        <a href="<?= url('/clientes/cadastrar') ?>" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-plus-lg me-1"></i>
+                                            Novo Cliente
+                                        </a>
                                     </td>
                                 </tr>
                             <?php endif; ?>

@@ -23,9 +23,8 @@ class DashboardController extends Controller
 
         $controller = match ($role) {
             User::ROLE_DISPATCHER => new DashboardDispatcherController(),
-            User::ROLE_MANAGER => new DashboardManagerController(),
+            User::ROLE_MANAGER, User::ROLE_STAKEHOLDER => new DashboardManagerController(),
             User::ROLE_ADMIN => new DashboardAdminController(),
-            User::ROLE_STAKEHOLDER => new DashboardStakeholderController(),
             default => null,
         };
 

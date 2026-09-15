@@ -29,6 +29,7 @@ class User extends AbstractModel
     public const ROLES_CAN_IMPORT = [
         self::ROLE_ADMIN,
         self::ROLE_MANAGER,
+        self::ROLE_STAKEHOLDER,
     ];
 
     /** Papéis que podem cadastrar/editar pedidos e clientes. */
@@ -36,12 +37,14 @@ class User extends AbstractModel
         self::ROLE_ADMIN,
         self::ROLE_MANAGER,
         self::ROLE_DISPATCHER,
+        self::ROLE_STAKEHOLDER,
     ];
 
     /** Papéis que podem EXCLUIR pedidos — mais restrito que gerenciar. */
     public const ROLES_CAN_DELETE_ORDERS = [
         self::ROLE_ADMIN,
         self::ROLE_MANAGER,
+        self::ROLE_STAKEHOLDER,
     ];
 
     protected string $table = "users";

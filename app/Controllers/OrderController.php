@@ -15,14 +15,10 @@ use JetBrains\PhpStorm\NoReturn;
 
 class OrderController extends Controller
 {
-    private const ROLES_CAN_VIEW_ONLY = [
-        User::ROLE_STAKEHOLDER,
-    ];
-
     public function __construct()
     {
         parent::__construct("App");
-        $this->requireRole([...User::ROLES_CAN_MANAGE_ORDERS, ...self::ROLES_CAN_VIEW_ONLY]);
+        $this->requireRole(User::ROLES_CAN_MANAGE_ORDERS);
     }
 
     #[NoReturn]
@@ -43,7 +39,7 @@ class OrderController extends Controller
     #[NoReturn]
     public function create(): void
     {
-        $this->blockViewOnly();
+
 
         echo $this->render("orders/create", [
             "title" => "Novo Pedido | " . APP_NAME,
@@ -56,7 +52,6 @@ class OrderController extends Controller
     #[NoReturn]
     public function store(?array $data): void
     {
-        $this->blockViewOnly();
         $this->validateCsrfToken($data ?? [], "/pedidos/cadastrar");
 
         $order = new Order();
@@ -120,8 +115,6 @@ class OrderController extends Controller
     #[NoReturn]
     public function edit(?array $data): void
     {
-        $this->blockViewOnly();
-
         $order = Order::find((int)($data["id"] ?? 0));
 
         if (!$order) {
@@ -142,7 +135,6 @@ class OrderController extends Controller
     #[NoReturn]
     public function update(?array $data): void
     {
-        $this->blockViewOnly();
         $this->validateCsrfToken($data ?? [], "/pedidos/editar/" . ($data["id"] ?? ''));
 
         $order = Order::find((int)($data["id"] ?? 0));
@@ -198,7 +190,6 @@ class OrderController extends Controller
     #[NoReturn]
     public function advanceStatus(?array $data): void
     {
-        $this->blockViewOnly();
         $this->validateCsrfToken($data ?? [], "/pedidos");
 
         $order = Order::find((int)($data["id"] ?? 0));
@@ -251,7 +242,6 @@ class OrderController extends Controller
     #[NoReturn]
     public function markAsPending(?array $data): void
     {
-        $this->blockViewOnly();
         $this->validateCsrfToken($data ?? [], "/pedidos");
 
         $order = Order::find((int)($data["id"] ?? 0));
@@ -284,7 +274,6 @@ class OrderController extends Controller
     #[NoReturn]
     public function resolvePending(?array $data): void
     {
-        $this->blockViewOnly();
         $this->validateCsrfToken($data ?? [], "/pedidos");
 
         $order = Order::find((int)($data["id"] ?? 0));
@@ -317,7 +306,6 @@ class OrderController extends Controller
     #[NoReturn]
     public function destroy(?array $data): void
     {
-        $this->blockViewOnly();
         $this->validateCsrfToken($data ?? [], "/pedidos");
 
         $user = Auth::user();
@@ -354,16 +342,6 @@ class OrderController extends Controller
 
         Message::success("Pedido excluído com sucesso.");
         redirect("/pedidos");
-    }
-
-    private function blockViewOnly(): void
-    {
-        $role = Auth::user()->role ?? null;
-
-        if (in_array($role, self::ROLES_CAN_VIEW_ONLY, true)) {
-            Message::warning("Seu perfil tem acesso somente para visualização.");
-            redirect("/pedidos");
-        }
     }
 
     private function parseCurrency(?string $value): ?string

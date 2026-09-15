@@ -25,30 +25,36 @@ $oldestAvailableMonth = $availableMonths[count($availableMonths) - 1] ?? $select
         </a>
     </header>
 
-    <div class="page-heading d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="page-heading">
         <h3 class="mb-0">Dashboard</h3>
-
-        <form method="get" action="<?= url('/dashboard') ?>" class="d-flex align-items-center gap-2">
-            <input
-                    type="month"
-                    name="mes"
-                    id="mes"
-                    class="form-control form-control-sm"
-                    style="width: 170px;"
-                    value="<?= htmlspecialchars($selectedMonth) ?>"
-                    min="<?= htmlspecialchars($oldestAvailableMonth) ?>"
-                    max="<?= htmlspecialchars($currentMonth) ?>"
-                    onchange="this.form.submit()"
-            >
-        </form>
     </div>
 
     <?= \App\Core\Message::render() ?>
 
     <div class="page-content">
-        <section class="row g-3">
 
-            <!-- KPIs de negócio, escopados pelo mês selecionado -->
+        <!-- ================= SEÇÃO MENSAL ================= -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h5 class="mb-0 text-muted">Visão do mês</h5>
+            <form method="get" action="<?= url('/dashboard') ?>" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="ano" value="<?= htmlspecialchars($selectedYear) ?>">
+                <input
+                        type="month"
+                        name="mes"
+                        id="mes"
+                        class="form-control form-control-sm"
+                        style="width: 170px;"
+                        value="<?= htmlspecialchars($selectedMonth) ?>"
+                        min="<?= htmlspecialchars($oldestAvailableMonth) ?>"
+                        max="<?= htmlspecialchars($currentMonth) ?>"
+                        onchange="this.form.submit()"
+                >
+            </form>
+        </div>
+
+        <section class="row g-3 mb-4">
+
+            <!-- KPIs de negócio -->
             <?= $this->insert('dashboard/partials/_stat-card', [
                     'col' => 'col-12 col-sm-6 col-lg-3',
                     'icon' => 'iconly-boldBag',
@@ -85,7 +91,7 @@ $oldestAvailableMonth = $availableMonths[count($availableMonths) - 1] ?? $select
                             : '—',
             ]) ?>
 
-            <!-- Financeiro, escopado pelo mês selecionado -->
+            <!-- Financeiro -->
             <?= $this->insert('dashboard/partials/_stat-card', [
                     'col' => 'col-12 col-sm-6 col-lg-6',
                     'icon' => 'iconly-boldWallet',
@@ -104,7 +110,7 @@ $oldestAvailableMonth = $availableMonths[count($availableMonths) - 1] ?? $select
                     'value' => 'R$ ' . number_format($avgDailyFreight ?? 0, 2, ',', '.'),
             ]) ?>
 
-            <!-- Pontos de atenção, sempre "agora", não muda com o mês selecionado -->
+            <!-- Pontos de atenção -->
             <div class="col-12">
                 <hr class="my-2">
                 <h6 class="text-muted mb-0">Pontos de atenção</h6>
@@ -142,7 +148,7 @@ $oldestAvailableMonth = $availableMonths[count($availableMonths) - 1] ?? $select
                     'value' => $pendingOrders ?? 0,
             ]) ?>
 
-            <!-- Gráficos, escopados pelo mês selecionado -->
+            <!-- Gráficos do mês -->
             <div class="col-12 col-xl-6">
                 <div class="card h-100">
                     <div class="card-header">
@@ -187,7 +193,67 @@ $oldestAvailableMonth = $availableMonths[count($availableMonths) - 1] ?? $select
                 </div>
             </div>
 
-            <!-- Última importação -->
+        </section>
+
+        <!-- ================= SEÇÃO ANUAL ================= -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h5 class="mb-0 text-muted">Visão do ano</h5>
+            <form method="get" action="<?= url('/dashboard') ?>" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="mes" value="<?= htmlspecialchars($selectedMonth) ?>">
+                <select name="ano" id="ano" class="form-select form-select-sm" style="width: auto;"
+                        onchange="this.form.submit()">
+                    <?php foreach ($availableYears as $year): ?>
+                        <option value="<?= htmlspecialchars($year) ?>" <?= $year === $selectedYear ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($year) ?>
+                            <?= $year === $currentYear ? ' (atual)' : '' ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+        </div>
+
+        <section class="row g-3 mb-4">
+
+            <?= $this->insert('dashboard/partials/_stat-card', [
+                    'col' => 'col-12',
+                    'icon' => 'iconly-boldWallet',
+                    'color' => 'blue',
+                    'label' => 'Valor total gasto no ano',
+                    'value' => 'R$ ' . number_format($totalFreightYear ?? 0, 2, ',', '.'),
+            ]) ?>
+
+            <div class="col-12 col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">% de gasto por tipo de frete (ano)</h5>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <div id="freightShareByTypeYearChart" class="w-100"
+                             data-labels='<?= htmlspecialchars(json_encode($freightShareLabels ?? []), ENT_QUOTES) ?>'
+                             data-values='<?= htmlspecialchars(json_encode($freightShareValues ?? []), ENT_QUOTES) ?>'>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Gasto com frete por mês (<?= htmlspecialchars($selectedYear) ?>)</h5>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <div id="freightByMonthYearChart" class="w-100"
+                             data-labels='<?= htmlspecialchars(json_encode($freightByMonthLabels ?? []), ENT_QUOTES) ?>'
+                             data-values='<?= htmlspecialchars(json_encode($freightByMonthValues ?? []), ENT_QUOTES) ?>'>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Última importação -->
+        <section class="row g-3">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
@@ -213,8 +279,8 @@ $oldestAvailableMonth = $availableMonths[count($availableMonths) - 1] ?? $select
                     </div>
                 </div>
             </div>
-
         </section>
+
     </div>
 
     <footer class="mt-5">
@@ -237,3 +303,5 @@ $oldestAvailableMonth = $availableMonths[count($availableMonths) - 1] ?? $select
 <script src="<?= assets('/js/charts/orders-by-status-chart.js') ?>"></script>
 <script src="<?= assets('/js/charts/freight-by-type-chart.js') ?>"></script>
 <script src="<?= assets('/js/charts/orders-by-day-chart.js') ?>"></script>
+<script src="<?= assets('/js/charts/freight-share-by-type-year-chart.js') ?>"></script>
+<script src="<?= assets('/js/charts/freight-by-month-year-chart.js') ?>"></script>

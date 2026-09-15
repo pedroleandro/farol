@@ -36,12 +36,10 @@
                             <i class="bi bi-truck me-2"></i>
                             Todos os Pedidos
                         </h5>
-                        <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
-                            <a href="<?= url('/pedidos/cadastrar') ?>" class="btn btn-primary btn-sm">
-                                <i class="bi bi-plus-lg me-1"></i>
-                                Novo Pedido
-                            </a>
-                        <?php endif; ?>
+                        <a href="<?= url('/pedidos/cadastrar') ?>" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            Novo Pedido
+                        </a>
                     </div>
                     <div class="card-body">
 
@@ -95,68 +93,64 @@
                                             </span>
                                         </td>
                                         <td data-label="Ações" class="text-nowrap">
-                                            <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
-                                                <a href="<?= url('/pedidos/editar/' . $order->getId()) ?>"
-                                                   class="btn btn-sm btn-warning" title="Editar">
-                                                    <i class="bi bi-pencil-fill"></i>
-                                                </a>
-                                                <?php if ($order->canAdvanceStatus()): ?>
-                                                    <form action="<?= url('/pedidos/' . $order->getId() . '/avancar-status') ?>"
-                                                          method="POST" class="d-inline">
-                                                        <?= csrf_input() ?>
-                                                        <button type="submit" class="btn btn-sm btn-primary"
-                                                                title="Avançar para: <?= htmlspecialchars(\App\Models\Order::STATUS_LABELS[$order->getNextStatus()]) ?>">
-                                                            <i class="bi bi-arrow-right-circle-fill"></i>
-                                                        </button>
-                                                    </form>
-                                                <?php endif; ?>
-                                                <?php if (in_array($userRole ?? '', \App\Models\User::ROLES_CAN_DELETE_ORDERS)): ?>
-                                                    <button type="button" class="btn btn-sm btn-danger"
-                                                            title="Excluir"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#modalExcluir<?= $order->getId() ?>">
-                                                        <i class="bi bi-trash-fill"></i>
+                                            <a href="<?= url('/pedidos/editar/' . $order->getId()) ?>"
+                                               class="btn btn-sm btn-warning" title="Editar">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            <?php if ($order->canAdvanceStatus()): ?>
+                                                <form action="<?= url('/pedidos/' . $order->getId() . '/avancar-status') ?>"
+                                                      method="POST" class="d-inline">
+                                                    <?= csrf_input() ?>
+                                                    <button type="submit" class="btn btn-sm btn-primary"
+                                                            title="Avançar para: <?= htmlspecialchars(\App\Models\Order::STATUS_LABELS[$order->getNextStatus()]) ?>">
+                                                        <i class="bi bi-arrow-right-circle-fill"></i>
                                                     </button>
-                                                    <div class="modal fade text-left"
-                                                         id="modalExcluir<?= $order->getId() ?>"
-                                                         tabindex="-1" role="dialog" aria-hidden="true">
-                                                        <div class="modal-dialog modal-dialog-centered"
-                                                             role="document">
-                                                            <div class="modal-content">
-                                                                <div class="modal-header bg-danger">
-                                                                    <h5 class="modal-title text-white">
-                                                                        <i class="bi bi-trash-fill me-2"></i>
-                                                                        Excluir Pedido
-                                                                    </h5>
-                                                                    <button type="button" class="close"
-                                                                            data-bs-dismiss="modal"
-                                                                            aria-label="Close">
-                                                                        <i data-feather="x"></i>
+                                                </form>
+                                            <?php endif; ?>
+                                            <?php if (in_array($userRole ?? '', \App\Models\User::ROLES_CAN_DELETE_ORDERS)): ?>
+                                                <button type="button" class="btn btn-sm btn-danger"
+                                                        title="Excluir"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modalExcluir<?= $order->getId() ?>">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </button>
+                                                <div class="modal fade text-left"
+                                                     id="modalExcluir<?= $order->getId() ?>"
+                                                     tabindex="-1" role="dialog" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered"
+                                                         role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header bg-danger">
+                                                                <h5 class="modal-title text-white">
+                                                                    <i class="bi bi-trash-fill me-2"></i>
+                                                                    Excluir Pedido
+                                                                </h5>
+                                                                <button type="button" class="close"
+                                                                        data-bs-dismiss="modal"
+                                                                        aria-label="Close">
+                                                                    <i data-feather="x"></i>
+                                                                </button>
+                                                            </div>
+                                                            <div class="modal-body" style="overflow-wrap: break-word;">
+                                                                Tem certeza que deseja excluir o pedido
+                                                                <strong><?= htmlspecialchars($order->getOrderNumber()) ?></strong>?
+                                                                <small class="text-muted d-block mt-1">Esta ação não poderá ser desfeita.</small>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">
+                                                                    Cancelar
+                                                                </button>
+                                                                <form action="<?= url('/pedidos/excluir/' . $order->getId()) ?>" method="POST" class="d-inline">
+                                                                    <?= csrf_input() ?>
+                                                                    <input type="hidden" name="_method" value="DELETE">
+                                                                    <button type="submit" class="btn btn-danger ms-1">
+                                                                        Confirmar
                                                                     </button>
-                                                                </div>
-                                                                <div class="modal-body" style="overflow-wrap: break-word;">
-                                                                    Tem certeza que deseja excluir o pedido
-                                                                    <strong><?= htmlspecialchars($order->getOrderNumber()) ?></strong>?
-                                                                    <small class="text-muted d-block mt-1">Esta ação não poderá ser desfeita.</small>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-light-secondary" data-bs-dismiss="modal">
-                                                                        Cancelar
-                                                                    </button>
-                                                                    <form action="<?= url('/pedidos/excluir/' . $order->getId()) ?>" method="POST" class="d-inline">
-                                                                        <?= csrf_input() ?>
-                                                                        <input type="hidden" name="_method" value="DELETE">
-                                                                        <button type="submit" class="btn btn-danger ms-1">
-                                                                            Confirmar
-                                                                        </button>
-                                                                    </form>
-                                                                </div>
+                                                                </form>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                <?php endif; ?>
-                                            <?php else: ?>
-                                                <span class="text-muted small">Somente leitura</span>
+                                                </div>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -166,9 +160,10 @@
                                     <td colspan="6" class="text-center text-muted fst-italic py-4">
                                         <i class="bi bi-inbox-fill me-2"></i>
                                         Nenhum pedido cadastrado ainda.
-                                        <?php if (($userRole ?? '') !== \App\Models\User::ROLE_STAKEHOLDER): ?>
-                                            <a href="<?= url('/pedidos/cadastrar') ?>">Cadastrar o primeiro</a>
-                                        <?php endif; ?>
+                                        <a href="<?= url('/pedidos/cadastrar') ?>" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-plus-lg me-1"></i>
+                                            Novo Pedido
+                                        </a>
                                     </td>
                                 </tr>
                             <?php endif; ?>
