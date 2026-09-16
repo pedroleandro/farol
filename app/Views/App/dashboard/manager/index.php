@@ -193,6 +193,45 @@ $oldestAvailableMonth = $availableMonths[count($availableMonths) - 1] ?? $select
                 </div>
             </div>
 
+            <div class="col-12 col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Valor de frete por tipo de veículo</h5>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <div id="freightByVehicleTypeChart" class="w-100"
+                             data-labels='<?= htmlspecialchars(json_encode($vehicleTypeLabels ?? []), ENT_QUOTES) ?>'
+                             data-values='<?= htmlspecialchars(json_encode($vehicleTypeValues ?? []), ENT_QUOTES) ?>'>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Média de frete por rota (cidade/UF)</h5>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($routeAverages)): ?>
+                            <ul class="list-unstyled mb-0">
+                                <?php foreach ($routeAverages as $route): ?>
+                                    <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span>
+                                <?= htmlspecialchars($route['route']) ?>
+                                <span class="text-muted small">(<?= $route['order_count'] ?> pedidos)</span>
+                            </span>
+                                        <strong>R$ <?= number_format($route['avg_value'], 2, ',', '.') ?></strong>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php else: ?>
+                            <p class="text-muted fst-italic mb-0">Nenhuma rota registrada neste mês.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <!-- ================= SEÇÃO ANUAL ================= -->
@@ -305,3 +344,4 @@ $oldestAvailableMonth = $availableMonths[count($availableMonths) - 1] ?? $select
 <script src="<?= assets('/js/charts/orders-by-day-chart.js') ?>"></script>
 <script src="<?= assets('/js/charts/freight-share-by-type-year-chart.js') ?>"></script>
 <script src="<?= assets('/js/charts/freight-by-month-year-chart.js') ?>"></script>
+<script src="<?= assets('/js/charts/freight-by-vehicle-type-chart.js') ?>"></script>

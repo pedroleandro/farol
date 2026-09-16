@@ -74,6 +74,8 @@ class DashboardManagerController extends Controller
         $statusBreakdown = Order::statusBreakdownInMonth($selectedMonth);
         $freightByType = Order::freightValueByTypeInMonth($selectedMonth);
         $ordersByDay = Order::ordersByDayInMonth($selectedMonth);
+        $freightByVehicle = Order::freightValueByVehicleTypeInMonth($selectedMonth);
+        $routeAverages = Order::avgFreightByRouteInMonth($selectedMonth);
 
         // ---------------------------------------------------------
         // Visão anual
@@ -102,12 +104,11 @@ class DashboardManagerController extends Controller
                 : null,
             "avgDailyFreight" => $avgDailyFreight,
 
-            // Pontos de atenção — por enquanto ainda globais (sem
-            // filtro de mês); isso muda numa próxima entrega.
-            "dueSoon" => Order::countDueSoon(),
-            "awaitingStatusUpdate" => Order::countAwaitingStatusUpdate(),
-            "lateOrders" => Order::countLate(),
-            "pendingOrders" => Order::countPending(),
+            // Pontos de atenção — agora escopados pelo mês selecionado
+            "dueSoon" => Order::countDueSoonInMonth($selectedMonth),
+            "awaitingStatusUpdate" => Order::countAwaitingStatusUpdateInMonth($selectedMonth),
+            "lateOrders" => Order::countLateInMonth($selectedMonth),
+            "pendingOrders" => Order::countPendingInMonth($selectedMonth),
 
             // Gráficos do mês
             "statusLabels" => array_map(
@@ -122,6 +123,9 @@ class DashboardManagerController extends Controller
             "freightTypeValues" => array_values($freightByType),
             "ordersByDayLabels" => array_keys($ordersByDay),
             "ordersByDayValues" => array_values($ordersByDay),
+            "vehicleTypeLabels" => array_keys($freightByVehicle),
+            "vehicleTypeValues" => array_values($freightByVehicle),
+            "routeAverages" => $routeAverages,
 
             // Visão anual
             "totalFreightYear" => Order::sumFreightValueInYear($selectedYear),

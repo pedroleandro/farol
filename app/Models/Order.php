@@ -703,4 +703,92 @@ class Order extends AbstractModel
     {
         return (new static())->where("tracking_code", "=", $code)->first();
     }
+
+    /**
+     * @return array<string, float> [veículo normalizado => valor total]
+     */
+    public static function freightValueByVehicleTypeInMonth(string $yearMonth): array
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+        $instance = new static();
+
+        $sql = "SELECT UPPER(TRIM(vehicle_type)) AS vehicle, COALESCE(SUM(freight_value), 0) AS total
+            FROM orders
+            WHERE deleted_at IS NULL
+              AND vehicle_type IS NOT NULL
+              AND TRIM(vehicle_type) <> ''
+              AND order_date BETWEEN :start AND :end
+            GROUP BY UPPER(TRIM(vehicle_type))
+            ORDER BY total DESC";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["start" => $start, "end" => $end]);
+
+        $map = [];
+        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $map[$row["vehicle"]] = (float)$row["total"];
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array<int, array{route: string, avg_value: float, order_count: int}>
+     */
+    public static function avgFreightByRouteInMonth(string $yearMonth, int $limit = 10): array
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+        $instance = new static();
+
+        $sql = "SELECT
+                c.city AS city,
+                c.state AS state,
+                AVG(o.freight_value) AS avg_value,
+                COUNT(*) AS order_count
+            FROM orders o
+            INNER JOIN clients c ON c.id = o.client_id
+            WHERE o.deleted_at IS NULL
+              AND o.freight_value IS NOT NULL
+              AND c.city IS NOT NULL
+              AND o.order_date BETWEEN :start AND :end
+            GROUP BY c.city, c.state
+            ORDER BY order_count DESC, avg_value DESC
+            LIMIT :limit";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->bindValue(":start", $start);
+        $statement->bindValue(":end", $end);
+        $statement->bindValue(":limit", $limit, \PDO::PARAM_INT);
+        $statement->execute();
+
+        $rows = [];
+        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $route = $row["city"] . ($row["state"] ? "/" . $row["state"] : "");
+            $rows[] = [
+                "route" => $route,
+                "avg_value" => (float)$row["avg_value"],
+                "order_count" => (int)$row["order_count"],
+            ];
+        }
+
+        return $rows;
+    }
+
+    public static function countDueSoonInMonth(string $yearMonth, int $daysAhead = 3): int
+    {
+        [$start, $end] = self::monthRange($yearMonth);
+        $instance = new static();
+
+        $sql = "SELECT COUNT(*) FROM orders
+            WHERE deleted_at IS NULL
+              AND status <> 'delivered'
+              AND expected_delivery IS NOT NULL
+              AND expected_delivery BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY)
+              AND order_date BETWEEN :start AND :end";
+
+        $statement = $instance->connection->prepare($sql);
+        $statement->execute(["days" => $daysAhead, "start" => $start, "end" => $end]);
+
+        return (int)$statement->fetchColumn();
+    }
 }
